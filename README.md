@@ -6,7 +6,7 @@
 
 Este proyecto incluye la visualización en tiempo real y registro de datos de **temperatura a través de una termocupla conectada al módulo MAX6675**. La adquisición de datos se puede realizar de **forma manual o por tiempo definido**. Además, se incluye la **opción de ciclos que rigen el funcionamiento de un servo** utilizado específicamente para el montaje experimental del **análisis de temperatura de un nanomaterial implementado en PTT (Photothermal Therapy)**. La carpeta `arduino_nano_config` incluye el código subido al microcontrolador Arduino Nano utilizado. Sin embargo, es posible implementar el uso de otro microcontrolador a través de comunicación serial.
 
----
+![Programa en funcionamiento](images/program.png)
 
 ## Características Principales
 
@@ -81,30 +81,22 @@ La aplicación detecta y permite seleccionar los puertos seriales disponibles pa
 
 1.  **Clona este repositorio** o descarga los archivos del proyecto.
     ```bash
-    git clone [https://github.com/tu-usuario/nombre-del-repositorio.git](https://github.com/tu-usuario/nombre-del-repositorio.git)
-    cd nombre-del-repositorio
+    git clone https://github.com/JaimeCari/MAX6675_Temperature_Data_Reader.git
     ```
 
-2.  **Crea un entorno virtual** (recomendado para gestionar dependencias):
-    ```bash
-    python -m venv venv
-    ```
-
-3.  **Activa el entorno virtual**:
-    * **Windows**: `.\venv\Scripts\activate`
-    * **macOS/Linux**: `source venv/bin/activate`
-
-4.  **Instala las dependencias de Python**:
+2.  **Instala las dependencias de Python**:
     ```bash
     pip install PyQt5 matplotlib pyserial
     ```
 
-5.  **Prepara tu Arduino Nano**:
+3.  **Prepara tu Arduino Nano**:
     * Abre el archivo `arduino_nano_config/arduino_firmware.ino` en el **Arduino IDE**.
     * Asegúrate de tener instaladas las librerías necesarias para el MAX6675 (ej. `Adafruit_MAX6675.h`) y el Servo (`Servo.h`). Puedes instalarlas desde el "Administrador de Librerías" del Arduino IDE.
     * Conecta tu Arduino Nano a tu PC.
     * Selecciona la placa **Arduino Nano** y el **puerto COM/Serial** correcto en el menú **Herramientas** del Arduino IDE.
-    * Sube el código a tu Arduino Nano.
+    * Sube el código al Arduino Nano.
+    * En caso de tener problemas de conexión entre Arduino IDE y el microcontrolador se debe seleccionar la siguiente opción.
+    En Tools/Herramientas probar los distintos Processor/Procesador presentes (En el caso del Arduino UNO utilizado funcionaba el ATmega328P Old Bootloader). Recuerde instalar previamente los drivers correspondientes al Arduino. **Nota** al cargar un nuevo código al Arduino **cerrar** el Serial Monitor
 
 ---
 
@@ -136,5 +128,8 @@ La aplicación detecta y permite seleccionar los puertos seriales disponibles pa
 5. **arduino_nano_config/**:
    * arduino_firmware.ino: Código fuente del firmware para Arduino Nano (MAX6675 y Servo).
 6. **README.md**
+
+## Fuentes y recursos utilizados
+1. **Arduino: K-Type Thermocouple with MAX6675 Amplifier. Random Nerd Tutorials**: https://randomnerdtutorials.com/arduino-k-type-thermocouple-max6675/
 
 **Nota Importante:** Este proyecto es de **libre uso** y puede ser modificado y distribuido sin restricciones. El código incluido puede contener secciones generadas o asistidas por herramientas de inteligencia artificial. Cualquier Feedback es bienvenido.
