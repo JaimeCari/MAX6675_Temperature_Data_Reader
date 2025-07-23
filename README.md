@@ -100,6 +100,14 @@ La aplicación detecta y permite seleccionar los puertos seriales disponibles pa
 
 ---
 
+## Circuito
+### Circuito simplificado
+![circuito_principal](images/circuit_random_nerd_tutorials.png)
+### Implementación del circuito con capacitor en alimentación
+![circuito_capacitor](images/MAX6675_with_capacitor.png)
+
+---
+
 ## Uso
 
 1.  **Asegúrate de que tu Arduino Nano esté conectado** y el firmware cargado correctamente.
