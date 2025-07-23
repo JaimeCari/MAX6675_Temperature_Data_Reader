@@ -89,7 +89,9 @@ La aplicación detecta y permite seleccionar los puertos seriales disponibles pa
     pip install PyQt5 matplotlib pyserial
     ```
 
-3.  **Prepara tu Arduino Nano**:
+3. **Montaje del circuito**
+
+4.  **Preparar Arduino Nano**:
     * Abre el archivo `arduino_nano_config/arduino_firmware.ino` en el **Arduino IDE**.
     * Asegúrate de tener instaladas las librerías necesarias para el MAX6675 (ej. `Adafruit_MAX6675.h`) y el Servo (`Servo.h`). Puedes instalarlas desde el "Administrador de Librerías" del Arduino IDE.
     * Conecta tu Arduino Nano a tu PC.
@@ -98,11 +100,18 @@ La aplicación detecta y permite seleccionar los puertos seriales disponibles pa
     * En caso de tener problemas de conexión entre Arduino IDE y el microcontrolador se debe seleccionar la siguiente opción.
     En Tools/Herramientas probar los distintos Processor/Procesador presentes (En el caso del Arduino UNO utilizado funcionaba el ATmega328P Old Bootloader). Recuerde instalar previamente los drivers correspondientes al Arduino. **Nota** al cargar un nuevo código al Arduino **cerrar** el Serial Monitor
 
+5. **Ejecución del programa**:
+    ```bash
+    python main_app.py
+    ```
+
 ---
 
 ## Circuito
 ### Circuito simplificado
 ![circuito_principal](images/circuit_random_nerd_tutorials.png)
+**Fuente**: https://randomnerdtutorials.com/arduino-k-type-thermocouple-max6675/
+
 ### Implementación del circuito con capacitor en alimentación
 ![circuito_capacitor](images/MAX6675_with_capacitor.png)
 
