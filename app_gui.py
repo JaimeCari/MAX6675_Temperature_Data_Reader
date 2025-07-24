@@ -19,7 +19,8 @@ from app_parameters import (
     CSV_HEADERS, CSV_FILE_FILTER,
     COMMAND_SERVO_OPEN, COMMAND_SERVO_CLOSE,
     DEFAULT_CYCLE_COUNT, DEFAULT_INTERVAL_SEC,
-    DATA_REQUEST_INTERVAL_MS
+    DATA_REQUEST_INTERVAL_MS, TIME_DISPLAY_STYLE,
+    HELP_LABEL_STYLE
 )
 from serial_handler import SerialReader, list_available_ports
 
@@ -92,14 +93,14 @@ class ArduinoControlApp(QWidget):
         temp_layout = QHBoxLayout()
         temp_layout.addWidget(QLabel("Temperatura Actual:"))
         self.temperature_display = QLabel("---.-- °C")
-        self.temperature_display.setStyleSheet("font-size: 24px; font-weight: bold; color: red;")
+        self.temperature_display.setStyleSheet(TEMP_DISPLAY_STYLE)
         temp_layout.addWidget(self.temperature_display, alignment=Qt.AlignCenter)
         temp_time_layout.addLayout(temp_layout)
 
         elapsed_layout = QHBoxLayout()
         elapsed_layout.addWidget(QLabel("Tiempo Transcurrido:"))
         self.elapsed_time_display = QLabel("0.00 s")
-        self.elapsed_time_display.setStyleSheet("font-size: 18px; color: green;")
+        self.elapsed_time_display.setStyleSheet(TIME_DISPLAY_STYLE)
         elapsed_layout.addWidget(self.elapsed_time_display, alignment=Qt.AlignCenter)
         temp_time_layout.addLayout(elapsed_layout)
 
@@ -162,7 +163,7 @@ class ArduinoControlApp(QWidget):
 
         self.duration_help_label = QLabel("Ingrese **0.0** para un registro de tiempo **indefinido**. Cualquier valor positivo detendrá el registro automáticamente después de ese tiempo.")
         self.duration_help_label.setWordWrap(True)
-        self.duration_help_label.setStyleSheet("color: gray; font-size: 10px; margin-left: 5px;")
+        self.duration_help_label.setStyleSheet(HELP_LABEL_STYLE)
         self.duration_help_label.hide()
         manual_servo_layout.addWidget(self.duration_help_label)
 

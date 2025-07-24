@@ -148,5 +148,6 @@ La aplicación detecta y permite seleccionar los puertos seriales disponibles pa
 
 ## Fuentes y recursos utilizados
 1. **Arduino: K-Type Thermocouple with MAX6675 Amplifier. Random Nerd Tutorials**: https://randomnerdtutorials.com/arduino-k-type-thermocouple-max6675/
+2. **Termopar Tipo K con PIC 🔥 CCS C y MAX6675 # 045**: https://www.youtube.com/watch?v=jPWzH1l8c34
 
 **Nota Importante:** Este proyecto es de **libre uso** y puede ser modificado y distribuido sin restricciones. El código incluido puede contener secciones generadas o asistidas por herramientas de inteligencia artificial. Cualquier Feedback es bienvenido.
