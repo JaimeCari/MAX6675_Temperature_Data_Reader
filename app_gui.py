@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QLabel, QComboBox, QStatusBar, QFileDialog,
-                             QGroupBox, QSpinBox, QDoubleSpinBox)
+                             QGroupBox, QSpinBox, QDoubleSpinBox, QMessageBox)
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QIcon
 
@@ -394,6 +394,8 @@ class ArduinoControlApp(QWidget):
         if not self.is_logging:
             self.statusBar.showMessage("El registro de datos no está activo.")
             return
+        
+        has_data_to_plot = bool(self.time_data) and bool(self.temp_data) and self.time_data[-1] > 0
 
         if self.csv_file:
             self.csv_file.close()
@@ -407,6 +409,54 @@ class ArduinoControlApp(QWidget):
 
             if self.manual_logging_timer.isActive():
                 self.manual_logging_timer.stop()
+
+        if has_data_to_plot:
+            self.ask_to_plot_data()
+        else:
+            self.statusBar.showMessage("Registro de datos detenido. No hay datos para graficar.")
+            self.time_data.clear() 
+            self.temp_data.clear() 
+            self.update_plot() 
+    
+    def ask_to_plot_data(self):
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setText("La toma de datos ha finalizado.")
+        msg_box.setInformativeText("¿Desea graficar los datos recolectados en una nueva ventana?")
+        msg_box.setWindowTitle("Datos Recolectados")
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.Yes)
+
+        reply = msg_box.exec_()
+
+        if reply == QMessageBox.Yes:
+            self.plot_data_in_new_window()
+        else:
+            self.statusBar.showMessage("Datos no graficados. Registro listo para una nueva toma.")
+            self.time_data.clear()
+            self.temp_data.clear()
+            self.update_plot()
+
+    def plot_data_in_new_window(self):
+        if not self.time_data or not self.temp_data:
+            self.statusBar.showMessage("No hay datos para graficar.")
+            return
+
+        fig_popup, ax_popup = plt.subplots(figsize=(8, 6))
+        ax_popup.plot(list(self.time_data), list(self.temp_data), 'b-o', markersize=3) 
+        ax_popup.set_title("Gráfica de Datos Recolectados")
+        ax_popup.set_xlabel("Tiempo (s)")
+        ax_popup.set_ylabel("Temperatura (°C)")
+        ax_popup.grid(True)
+        fig_popup.tight_layout()
+
+        self.time_data.clear()
+        self.temp_data.clear()
+        self.update_plot() 
+
+        plt.show()
+
+        self.statusBar.showMessage("Gráfica generada en una nueva ventana. Listo para una nueva toma de datos.")
 
     def auto_stop_logging(self):
         if self.is_logging and not self.logging_started_by_cycle:
