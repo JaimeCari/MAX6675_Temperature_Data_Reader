@@ -13,6 +13,7 @@ import time
 import csv
 from datetime import datetime
 import os
+import pandas as pd
 
 from app_parameters import (
     MAX_PLOT_POINTS, APP_WINDOW_TITLE, TEMP_DISPLAY_STYLE,
@@ -41,6 +42,7 @@ class ArduinoControlApp(QWidget):
         self.logging_started_by_cycle = False
         self.manual_logging_timer = QTimer(self)
         self.manual_logging_timer.timeout.connect(self.auto_stop_logging)
+        self.last_csv_filename = ""
 
         self.data_request_timer = QTimer(self)
         self.data_request_timer.timeout.connect(self.request_temperature_from_arduino)
@@ -174,6 +176,10 @@ class ArduinoControlApp(QWidget):
         self.stop_logging_button = QPushButton("Detener Registro")
         self.stop_logging_button.clicked.connect(self.stop_logging)
         manual_servo_layout.addWidget(self.stop_logging_button)
+        
+        self.load_plot_csv_button = QPushButton("Cargar y Graficar CSV")
+        self.load_plot_csv_button.clicked.connect(self.load_and_plot_from_selected_csv)
+        manual_servo_layout.addWidget(self.load_plot_csv_button)
 
         manual_servo_group.setLayout(manual_servo_layout)
         control_column_layout.addWidget(manual_servo_group)
@@ -367,11 +373,12 @@ class ArduinoControlApp(QWidget):
             return
 
         try:
-            self.csv_file = open(csv_filename, 'w', newline='')
+            self.csv_file = open(csv_filename, 'w', newline='', encoding='utf-8')
             self.csv_writer = csv.writer(self.csv_file)
             self.csv_writer.writerow(CSV_HEADERS)
             self.is_logging = True
             self.start_time = time.time()
+            self.last_csv_filename = csv_filename
 
             self.time_data.clear()
             self.temp_data.clear()
@@ -395,30 +402,40 @@ class ArduinoControlApp(QWidget):
             self.statusBar.showMessage("El registro de datos no está activo.")
             return
         
-        has_data_to_plot = bool(self.time_data) and bool(self.temp_data) and self.time_data[-1] > 0
+        has_live_data_to_plot = bool(self.time_data) and bool(self.temp_data) and self.time_data[-1] > 0
 
         if self.csv_file:
             self.csv_file.close()
             self.csv_file = None
             self.csv_writer = None
             self.is_logging = False
+            
+            prompt_to_plot_after_stop = not self.logging_started_by_cycle 
             self.logging_started_by_cycle = False
+
             self.statusBar.showMessage("Registro de datos detenido y archivo CSV cerrado.")
             self.elapsed_time_display.setText("0.00 s")
             self.update_control_states(self.is_connected, self.cycle_timer.isActive())
 
             if self.manual_logging_timer.isActive():
                 self.manual_logging_timer.stop()
-
-        if has_data_to_plot:
-            self.ask_to_plot_data()
+            
+            if prompt_to_plot_after_stop and os.path.exists(self.last_csv_filename) and os.path.getsize(self.last_csv_filename) > len(CSV_HEADERS) * 2:
+                self.ask_to_plot_data(self.last_csv_filename)
+            else:
+                self.statusBar.showMessage("Registro de datos detenido. No hay datos significativos para graficar.")
+                self.time_data.clear() 
+                self.temp_data.clear() 
+                self.update_plot() 
         else:
-            self.statusBar.showMessage("Registro de datos detenido. No hay datos para graficar.")
-            self.time_data.clear() 
-            self.temp_data.clear() 
-            self.update_plot() 
-    
-    def ask_to_plot_data(self):
+            self.statusBar.showMessage("No hay archivo CSV abierto para cerrar.")
+            self.is_logging = False
+            self.logging_started_by_cycle = False
+            self.update_control_states(self.is_connected, self.cycle_timer.isActive())
+            if has_live_data_to_plot and self.last_csv_filename:
+                 self.ask_to_plot_data(self.last_csv_filename)
+
+    def ask_to_plot_data(self, csv_filepath):
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Question)
         msg_box.setText("La toma de datos ha finalizado.")
@@ -430,33 +447,74 @@ class ArduinoControlApp(QWidget):
         reply = msg_box.exec_()
 
         if reply == QMessageBox.Yes:
-            self.plot_data_in_new_window()
+            self.plot_data_from_csv(csv_filepath)
         else:
             self.statusBar.showMessage("Datos no graficados. Registro listo para una nueva toma.")
             self.time_data.clear()
             self.temp_data.clear()
             self.update_plot()
 
-    def plot_data_in_new_window(self):
-        if not self.time_data or not self.temp_data:
-            self.statusBar.showMessage("No hay datos para graficar.")
+    def plot_data_from_csv(self, csv_filepath):
+        if not os.path.exists(csv_filepath):
+            self.statusBar.showMessage(f"Error: El archivo CSV '{csv_filepath}' no existe.")
             return
 
-        fig_popup, ax_popup = plt.subplots(figsize=(8, 6))
-        ax_popup.plot(list(self.time_data), list(self.temp_data), 'b-o', markersize=3) 
-        ax_popup.set_title("Gráfica de Datos Recolectados")
-        ax_popup.set_xlabel("Tiempo (s)")
-        ax_popup.set_ylabel("Temperatura (°C)")
-        ax_popup.grid(True)
-        fig_popup.tight_layout()
+        try:
+            df = pd.read_csv(csv_filepath, encoding='utf-8') 
+            
+            time_col_name = CSV_HEADERS[0]
+            temp_col_name = CSV_HEADERS[1]
 
-        self.time_data.clear()
-        self.temp_data.clear()
-        self.update_plot() 
+            if time_col_name not in df.columns or temp_col_name not in df.columns:
+                self.statusBar.showMessage(f"Error: CSV no tiene las columnas esperadas: '{time_col_name}' o '{temp_col_name}'. Columnas encontradas: {df.columns.tolist()}")
+                return
 
-        plt.show()
+            df[time_col_name] = pd.to_numeric(df[time_col_name], errors='coerce')
+            df[temp_col_name] = pd.to_numeric(df[temp_col_name], errors='coerce')
+            df.dropna(subset=[time_col_name, temp_col_name], inplace=True)
 
-        self.statusBar.showMessage("Gráfica generada en una nueva ventana. Listo para una nueva toma de datos.")
+            if df.empty:
+                self.statusBar.showMessage(f"El archivo '{os.path.basename(csv_filepath)}' no contiene datos numéricos válidos para graficar.")
+                return
+
+            time_data_full = df[time_col_name].tolist()
+            temp_data_full = df[temp_col_name].tolist()
+
+            fig_popup, ax_popup = plt.subplots(figsize=(8, 6))
+            ax_popup.plot(time_data_full, temp_data_full, 'b-o', markersize=3) 
+            ax_popup.set_title(f"Gráfica de Datos Recolectados desde:\n{os.path.basename(csv_filepath)}")
+            ax_popup.set_xlabel(time_col_name)
+            ax_popup.set_ylabel(temp_col_name)
+            ax_popup.grid(True)
+            fig_popup.tight_layout()
+
+            self.time_data.clear()
+            self.temp_data.clear()
+            self.update_plot() 
+
+            plt.show() 
+
+            self.statusBar.showMessage(f"Gráfica de '{os.path.basename(csv_filepath)}' generada en una nueva ventana. Listo para una nueva toma de datos.")
+
+        except UnicodeDecodeError:
+            self.statusBar.showMessage(f"Error de decodificación al leer el CSV. Intente con otra codificación (ej. 'latin1', 'cp1252'). Archivo: {os.path.basename(csv_filepath)}")
+        except Exception as e:
+            self.statusBar.showMessage(f"Error al graficar datos del CSV: {e}")
+            self.time_data.clear() 
+            self.temp_data.clear() 
+            self.update_plot() 
+
+    def load_and_plot_from_selected_csv(self):
+        csv_filename, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleccionar Archivo CSV para Graficar",
+            "",
+            CSV_FILE_FILTER
+        )
+        if csv_filename:
+            self.plot_data_from_csv(csv_filename)
+        else:
+            self.statusBar.showMessage("Selección de archivo CSV cancelada.")
 
     def auto_stop_logging(self):
         if self.is_logging and not self.logging_started_by_cycle:
@@ -481,18 +539,17 @@ class ArduinoControlApp(QWidget):
             self.logging_started_by_cycle = True
             prev_duration_setting = self.logging_duration_spinbox.value()
             self.logging_duration_spinbox.setValue(0.0)
-
             self.start_logging()
-
             self.logging_duration_spinbox.setValue(prev_duration_setting)
 
             if not self.is_logging:
                 self.statusBar.showMessage("Error: No se pudo iniciar el registro de datos. Ciclos cancelados.")
                 self.logging_started_by_cycle = False
                 return
-
         else:
-            self.logging_started_by_cycle = False
+            if self.manual_logging_timer.isActive():
+                self.manual_logging_timer.stop()
+            self.logging_started_by_cycle = True
 
         self.statusBar.showMessage(f"Iniciando {self.total_cycles} ciclos con intervalo de {self.interval_duration:.1f}s.")
         self.update_control_states(self.is_connected, True)
@@ -508,9 +565,15 @@ class ArduinoControlApp(QWidget):
         self.current_cycle = 0
 
         if self.logging_started_by_cycle and self.is_logging:
-            self.stop_logging()
+            self.logging_started_by_cycle = False
+            self.stop_logging() 
+            self.logging_started_by_cycle = True
+            self.statusBar.showMessage("Modo de ciclos detenido. Registro de datos finalizado.")
         elif not self.logging_started_by_cycle and self.is_logging:
-            self.statusBar.showMessage("Modo de ciclos detenido. El registro de datos continúa.")
+            self.statusBar.showMessage("Modo de ciclos detenido. El registro de datos manual continúa.")
+            manual_duration = self.logging_duration_spinbox.value()
+            if manual_duration > 0 and not self.manual_logging_timer.isActive():
+                self.manual_logging_timer.start(int(manual_duration * 1000))
 
         self.update_control_states(self.is_connected, False)
 
@@ -538,7 +601,7 @@ class ArduinoControlApp(QWidget):
                 self.run_cycle_step()
             else:
                 self.statusBar.showMessage(f"Todos los ciclos completados ({self.total_cycles}).")
-                self.stop_cycles()
+                self.stop_cycles() 
 
     def update_control_states(self, is_connected, cycle_mode_active):
         self.port_selector.setEnabled(not is_connected)
@@ -552,6 +615,8 @@ class ArduinoControlApp(QWidget):
 
         self.logging_duration_spinbox.setEnabled(is_connected and not self.is_logging and not cycle_mode_active)
         self.help_duration_button.setEnabled(is_connected and not self.is_logging and not cycle_mode_active)
+        
+        self.load_plot_csv_button.setEnabled(not cycle_mode_active)
 
         self.cycle_spinbox.setEnabled(is_connected and not cycle_mode_active and not self.is_logging)
         self.interval_spinbox.setEnabled(is_connected and not cycle_mode_active and not self.is_logging)
