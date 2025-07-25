@@ -19,6 +19,7 @@ Este proyecto incluye la visualización en tiempo real y registro de datos de **
     * **Modo Manual**: Control directo para abrir y cerrar el servo.
     * **Modo de Ciclos**: Automatiza la operación del servo para experimentos repetitivos de calentamiento/enfriamiento.
 * **Adaptabilidad del Microcontrolador**: Aunque incluye configuración para Arduino Nano, el diseño permite la integración con otros microcontroladores vía comunicación serial.
+* **Gráfico de datos con MatplotLib**: Al finalizar una toma de datos el programa pregunta si se desean graficarlos.
 
 ---
 
