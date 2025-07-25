@@ -1,7 +1,11 @@
+##################################################
+# Listado de parámetros importantes del proyecto #
+##################################################
+
 BAUD_RATE = 9600
-COMMAND_REQUEST_TEMP = b'T'
-COMMAND_SERVO_OPEN = b'O'
-COMMAND_SERVO_CLOSE = b'C'
+COMMAND_REQUEST_TEMP = b'T' # Modificar manualmente en .ino
+COMMAND_SERVO_OPEN = b'O' # Modificar manualmente en .ino
+COMMAND_SERVO_CLOSE = b'C' # Modificar manualmente en .ino
 MAX_PLOT_POINTS = 100    
 DATA_REQUEST_INTERVAL_MS = 200
 APP_WINDOW_TITLE = "Monitor de Temperatura y Control de Servo"
